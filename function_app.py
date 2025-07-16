@@ -1,30 +1,25 @@
 import azure.functions as func
-from azure.cosmos import CosmosClient
+from pymongo import MongoClient
 import os
 import logging
 import json
 
 app = func.FunctionApp()
 
-# Read Cosmos DB settings from environment
-COSMOS_ENDPOINT = os.environ['COSMOS_ENDPOINT']
-COSMOS_KEY = os.environ['COSMOS_KEY']
-DATABASE_NAME = 'LibraryDB'
-CONTAINER_NAME = 'Books'
+# MongoDB URI from Cosmos (replace <password> securely)
+MONGO_URI = os.environ["MONGO_URI"]  # use local.settings.json or env var
 
-client = CosmosClient(COSMOS_ENDPOINT, COSMOS_KEY)
-database = client.get_database_client(DATABASE_NAME)
-container = database.get_container_client(CONTAINER_NAME)
+client = MongoClient(MONGO_URI)
+db = client["LibraryDB"]  # Replace with your DB name
+collection = db["Books"]  # Replace with your collection name
 
 @app.route(route="add_book", auth_level=func.AuthLevel.ANONYMOUS)
 def add_book(req: func.HttpRequest) -> func.HttpResponse:
-    logging.info("Processing add_book request.")
-
     try:
         req_body = req.get_json()
 
         book = {
-            'id': req_body.get('id'),  # Make sure this is unique
+            'id': req_body.get('id'),
             'title': req_body.get('title'),
             'author': req_body.get('author'),
             'genre': req_body.get('genre'),
@@ -37,13 +32,10 @@ def add_book(req: func.HttpRequest) -> func.HttpResponse:
             'notes': req_body.get('notes')
         }
 
-        container.create_item(book)
+        collection.insert_one(book)
 
-        return func.HttpResponse(
-            f"Book added: {book['title']}",
-            status_code=201
-        )
+        return func.HttpResponse(f"Book added: {book['title']}", status_code=201)
 
     except Exception as e:
-        logging.error(f"Error in add_book: {e}")
+        logging.error(f"Error: {e}")
         return func.HttpResponse(f"Error: {str(e)}", status_code=500)
