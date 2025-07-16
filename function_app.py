@@ -13,6 +13,9 @@ client = MongoClient(MONGO_URI)
 db = client["LibraryDB"]  # Replace with your DB name
 collection = db["Books"]  # Replace with your collection name
 
+# Function to return all books sorted by dateAdded descending
+
+
 @app.route(route="add_book", auth_level=func.AuthLevel.ANONYMOUS)
 def add_book(req: func.HttpRequest) -> func.HttpResponse:
     try:
