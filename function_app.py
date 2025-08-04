@@ -42,3 +42,23 @@ def add_book(req: func.HttpRequest) -> func.HttpResponse:
     except Exception as e:
         logging.error(f"Error: {e}")
         return func.HttpResponse(f"Error: {str(e)}", status_code=500)
+
+@app.route(route="list_books", auth_level=func.AuthLevel.ANONYMOUS)
+def list_books(req: func.HttpRequest) -> func.HttpResponse:
+    try:
+        # Get all books sorted by lastModified descending
+        books = list(collection.find().sort("dateAdded", -1))
+
+        # Convert ObjectId to string for JSON serialization
+        for book in books:
+            book["_id"] = str(book["_id"])
+
+        return func.HttpResponse(
+            json.dumps(books, indent=2),
+            mimetype="application/json",
+            status_code=200
+        )
+
+    except Exception as e:
+        logging.error(f"Error in list_books: {e}")
+        return func.HttpResponse(f"Error: {str(e)}", status_code=500)
